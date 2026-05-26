@@ -1,7 +1,81 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@inject TodoTaskService TaskService
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Task Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<section class="dashboard-shell">
+    <div class="dashboard-hero">
+        <div>
+            <p class="eyebrow">Blazor Task Management System</p>
+            <h1>Application 08 Dashboard</h1>
+            <p class="task-subtitle">A professional ToDo workspace connected to a local SQLite database.</p>
+        </div>
+        <button class="primary-action compact-action" type="button" @onclick='() => Navigation.NavigateTo("/todo")'>Open tasks</button>
+    </div>
 
-Welcome to your new app.
+    @if (stats is not null)
+    {
+        <div class="metric-grid">
+            <div class="metric-card">
+                <span>Total tasks</span>
+                <strong>@stats.TotalTasks</strong>
+            </div>
+            <div class="metric-card">
+                <span>Open</span>
+                <strong>@stats.OpenTasks</strong>
+            </div>
+            <div class="metric-card">
+                <span>Due today</span>
+                <strong>@stats.DueTodayTasks</strong>
+            </div>
+            <div class="metric-card alert-card">
+                <span>Overdue</span>
+                <strong>@stats.OverdueTasks</strong>
+            </div>
+        </div>
+    }
+
+    <section class="recent-panel" aria-labelledby="recent-title">
+        <div class="panel-heading">
+            <div>
+                <p class="eyebrow">Latest database rows</p>
+                <h2 id="recent-title">Recent activity</h2>
+            </div>
+            <button class="icon-button" type="button" @onclick='() => Navigation.NavigateTo("/database")'>View database</button>
+        </div>
+
+        @if (recentTasks.Count == 0)
+        {
+            <div class="empty-state">No tasks have been stored yet.</div>
+        }
+        else
+        {
+            <div class="recent-list">
+                @foreach (var task in recentTasks)
+                {
+                    <div class="recent-row">
+                        <span class="status-dot @(task.IsCompleted ? "complete" : null)"></span>
+                        <div>
+                            <strong>@task.Title</strong>
+                            <span>@task.Priority priority</span>
+                        </div>
+                        <small>@(task.UpdatedAt ?? task.CreatedAt).ToString("MMM dd, h:mm tt")</small>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+</section>
+
+@code {
+    private TodoDashboardStats? stats;
+    private List<TodoTask> recentTasks = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        stats = await TaskService.GetStatsAsync();
+        recentTasks = await TaskService.GetRecentTasksAsync(5);
+    }
+}
