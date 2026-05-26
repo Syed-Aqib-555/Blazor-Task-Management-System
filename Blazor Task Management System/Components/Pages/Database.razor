@@ -1,0 +1,78 @@
+@page "/database"
+@rendermode InteractiveServer
+@inject TodoTaskService TaskService
+@inject DatabaseInfo DatabaseInfo
+
+<PageTitle>Database Output</PageTitle>
+
+<section class="database-shell">
+    <div class="task-header">
+        <div>
+            <p class="eyebrow">Server output</p>
+            <h1>Local Database</h1>
+            <p class="task-subtitle">The table below is read from the same SQLite file used by the browser task screen.</p>
+        </div>
+        <button class="primary-action compact-action" type="button" @onclick="LoadRowsAsync">Refresh</button>
+    </div>
+
+    <div class="database-details">
+        <div>
+            <span>Database file</span>
+            <strong>@DatabaseInfo.FilePath</strong>
+        </div>
+        <div>
+            <span>Table</span>
+            <strong>Tasks</strong>
+        </div>
+        <div>
+            <span>Rows</span>
+            <strong>@rows.Count</strong>
+        </div>
+    </div>
+
+    <pre class="sql-preview">SELECT Id, Title, Priority, DueDate, IsCompleted, CreatedAt, UpdatedAt FROM Tasks ORDER BY IsCompleted, DueDate;</pre>
+
+    <div class="database-table-wrap">
+        <table class="database-table">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Title</th>
+                    <th>Priority</th>
+                    <th>Due date</th>
+                    <th>Completed</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in rows)
+                {
+                    <tr>
+                        <td>@row.Id</td>
+                        <td>@row.Title</td>
+                        <td><span class="priority-chip @row.Priority.ToLowerInvariant()">@row.Priority</span></td>
+                        <td>@(row.DueDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                        <td>@(row.IsCompleted ? "Yes" : "No")</td>
+                        <td>@row.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(row.UpdatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+@code {
+    private List<TodoTask> rows = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRowsAsync();
+    }
+
+    private async Task LoadRowsAsync()
+    {
+        rows = await TaskService.GetTasksAsync();
+    }
+}
